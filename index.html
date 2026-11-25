@@ -1,0 +1,287 @@
+<meta charset="utf-8">
+<title>Hokmah</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: reading column centred like a printed Bible page; sermon drawer slides from the right (bottom sheet on phones). */
+:root{
+  --paper:#f5f8fc; --surface:#ffffff; --ink:#18212d; --muted:#5d6b7c; --line:#dbe3ee;
+  --mark:#dce9f8; --mark-strong:#6b9fd6; --accent:#1f4f8a; --accent-ink:#ffffff; --accent-soft:#e3edf8; --focus:#1f4f8a;
+  --f-read:Literata, Georgia, "Times New Roman", serif; --f-ui:Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f1520; --surface:#162030; --ink:#e3eaf4; --muted:#93a3b8; --line:#26344a;
+  --mark:#1d3352; --mark-strong:#5b93d3; --accent:#8fbcf0; --accent-ink:#0b1422; --accent-soft:#1c2c44; --focus:#8fbcf0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f1520; --surface:#162030; --ink:#e3eaf4; --muted:#93a3b8; --line:#26344a;
+  --mark:#1d3352; --mark-strong:#5b93d3; --accent:#8fbcf0; --accent-ink:#0b1422; --accent-soft:#1c2c44; --focus:#8fbcf0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .in{max-width:1080px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.brand .tag{font-family:var(--f-ui);font-weight:500;font-size:.78rem;color:var(--muted);margin-left:6px}
+.brand{font-family:var(--f-read);font-weight:600;font-size:1.15rem;text-decoration:none;color:var(--ink);margin-right:auto}
+.nav{display:flex;gap:6px;flex-wrap:wrap}
+.nav button,.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500}
+.nav button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.search{display:flex;gap:6px;flex:1 1 220px;max-width:340px}
+.search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:7px 10px}
+main{max-width:1080px;margin:0 auto;padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2{font-family:var(--f-read);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:2rem} h2{font-size:1.2rem}
+.sub{color:var(--muted)}
+.lbl{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+/* books */
+.testament{display:grid;gap:10px;margin-top:22px}
+.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.book{display:flex;justify-content:space-between;align-items:baseline;gap:8px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;cursor:pointer}
+.book .n{font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.book.has{border-color:var(--mark-strong)}
+.book.has .n{color:var(--ink);font-weight:600}
+/* chapters */
+.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px;margin-top:16px}
+.ch{aspect-ratio:1;max-width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;font-variant-numeric:tabular-nums;font-weight:500;position:relative}
+.ch.has{background:var(--mark);border-color:var(--mark-strong)}
+.ch .dot{position:absolute;right:4px;top:3px;font-size:.62rem;color:var(--muted);font-weight:600}
+/* reading */
+.reader{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.chead{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px}
+.pager{display:flex;gap:6px}
+.text{font-family:var(--f-read);font-size:1.18rem;line-height:1.85;max-width:66ch;margin:0 auto;width:100%}
+.v{border-radius:4px;padding:1px 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.v sup{font-family:var(--f-ui);font-size:.62rem;font-weight:600;color:var(--muted);margin-right:3px;vertical-align:.5em}
+.v.has{background:var(--mark);cursor:pointer;text-decoration:underline;text-decoration-color:var(--mark-strong);text-decoration-thickness:2px;text-underline-offset:4px}
+.v.has:hover,.v.sel{background:var(--mark-strong);color:var(--ink)}
+.v.has sup{color:var(--ink)}
+.legend{font-size:.85rem;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sw{display:inline-block;width:28px;height:14px;border-radius:3px;background:var(--mark);border-bottom:2px solid var(--mark-strong)}
+.chlist{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 14px;display:grid;gap:8px;max-width:66ch;margin:0 auto;width:100%}
+/* drawer */
+.drawer{position:fixed;z-index:20;background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(0,0,0,.12);top:0;right:0;bottom:0;width:min(420px,100%);
+  padding-top:calc(env(safe-area-inset-top,0px) + 16px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:12px;transform:translateX(105%);transition:transform .22s ease}
+.drawer.open{transform:none}
+@media (max-width:640px){.drawer{top:auto;left:0;width:100%;max-height:78vh;border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;transform:translateY(105%);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+.dhead{display:flex;justify-content:space-between;gap:10px;align-items:start}
+.vquote{font-family:var(--f-read);font-style:italic;color:var(--muted);border-left:3px solid var(--mark-strong);padding-left:10px}
+.slist{list-style:none;margin:0;padding:0;overflow:auto;display:grid;gap:8px}
+.sermon{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:4px;background:var(--paper)}
+.sermon .who{font-weight:600}
+.sermon .meta{font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;font-variant-numeric:tabular-nums}
+.sermon .ref{font-family:var(--f-read)}
+.watch{justify-self:start;margin-top:4px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:7px 12px;font-weight:600;text-decoration:none;display:inline-flex;gap:6px;align-items:center}
+.player{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:8px;overflow:hidden;background:#000;margin-top:4px}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.x{border:0;background:transparent;font-size:1.4rem;line-height:1;cursor:pointer;padding:4px 8px;border-radius:6px}
+/* preachers */
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:16px}
+.pcard{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pcard .n{color:var(--muted);font-variant-numeric:tabular-nums;font-size:.85rem}
+.stable{width:100%;border-collapse:collapse;font-size:.92rem}
+.stable td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.stable td:first-child{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;margin-top:14px}
+.linkish{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;text-align:left}
+footer{max-width:1080px;margin:0 auto;padding-block:16px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));color:var(--muted);font-size:.78rem;border-top:1px solid var(--line)}
+.empty{color:var(--muted);padding:30px 0}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+</style>
+
+<header class="top"><div class="in">
+  <a class="brand" href="#">Hokmah <span class="tag">Bíblia e pregações</span></a>
+  <nav class="nav" aria-label="Seções">
+    <button type="button" id="navBooks" aria-pressed="true">Livros</button>
+    <button type="button" id="navPreachers" aria-pressed="false">Pregadores</button>
+  </nav>
+  <form class="search" id="searchForm" role="search">
+    <input id="q" type="search" placeholder="Ir para: Ef 5.18, João 3, Salmos 23" aria-label="Ir para passagem" autocomplete="off">
+    <button class="btn" type="submit">Ir</button>
+  </form>
+</div></header>
+
+<main id="view"><p class="empty">Carregando…</p></main>
+
+<aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="dTitle">
+  <div class="dhead"><div><div class="lbl">Pregações sobre</div><h2 id="dTitle"></h2></div><button class="x" type="button" id="dClose" aria-label="Fechar">×</button></div>
+  <div class="vquote" id="dQuote"></div>
+  <ul class="slist" id="dList"></ul>
+</aside>
+
+<footer id="credit"></footer>
+
+<script>
+const D={idx:null,books:{},bySlug:{},links:{},sel:null};
+const $=id=>document.getElementById(id);
+const el=(t,p={},k=[])=>{const e=document.createElement(t);for(const[a,v]of Object.entries(p)){if(v==null)continue;if(a==='class')e.className=v;else if(a==='text')e.textContent=v;else if(a.startsWith('on'))e.addEventListener(a.slice(2),v);else e.setAttribute(a,v)}for(const c of[].concat(k))if(c!=null&&c!==false)e.append(c);return e};
+const fmtDate=d=>d?d.split('-').reverse().join('/'):'';
+const strip=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const EMBED=!/claude|anthropic/.test(location.hostname)&&location.protocol==='https:';
+const ytUrl=id=>'https://www.youtube.com/watch?v='+encodeURIComponent(id);
+
+async function loadBook(slug){
+  if(!D.books[slug])D.books[slug]=fetch('dados/livros/'+slug+'.json').then(r=>{if(!r.ok)throw new Error();return r.json()});
+  return D.books[slug];
+}
+// sermons covering a verse
+function sermonsFor(slug,c,v){
+  const out=new Set();
+  for(const [i,c1,v1,c2,v2] of D.links[slug]||[]){
+    const after=(c>c1)||(c===c1&&v>=v1), before=(c<c2)||(c===c2&&v<=v2);
+    if(after&&before)out.add(i);
+  }
+  return [...out].map(i=>D.idx.pregacoes[i]);
+}
+function sermonsInChapter(slug,c){
+  const s=new Set();for(const [i,c1,,c2] of D.links[slug]||[])if(c>=c1&&c<=c2)s.add(i);return s.size;
+}
+function setNav(which){$('navBooks').setAttribute('aria-pressed',String(which==='books'));$('navPreachers').setAttribute('aria-pressed',String(which==='preachers'))}
+
+function viewHome(){
+  setNav('books');
+  const v=$('view');v.replaceChildren();
+  const total=D.idx.pregacoes.length, preachers=new Set(D.idx.pregacoes.map(p=>p.p)).size;
+  v.append(el('h1',{text:'Escolha um livro'}),
+    el('div',{class:'stats'},[el('span',{text:total+' pregações'}),el('span',{text:preachers+' pregadores'}),el('span',{text:'livros com pregação têm borda azul'})]));
+  for(const [name,at] of [['Antigo Testamento',true],['Novo Testamento',false]]){
+    const grid=el('div',{class:'books'});
+    for(const b of D.idx.livros.filter(b=>b.at===at))
+      grid.append(el('button',{type:'button',class:'book'+(b.n_pregacoes?' has':''),onclick:()=>go(b.slug)},[el('span',{text:b.nome}),el('span',{class:'n',text:b.n_pregacoes?b.n_pregacoes+'':''})]));
+    v.append(el('section',{class:'testament'},[el('div',{class:'lbl',text:name}),grid]));
+  }
+}
+
+function viewBook(b){
+  setNav('books');
+  const v=$('view');v.replaceChildren();
+  v.append(el('div',{class:'lbl',text:b.at?'Antigo Testamento':'Novo Testamento'}),el('h1',{text:b.nome}),
+    el('div',{class:'stats'},[el('span',{text:b.versos.length+' capítulos'}),el('span',{text:b.n_pregacoes+' pregações'})]));
+  const g=el('div',{class:'chapters'});
+  b.versos.forEach((_,i)=>{const n=sermonsInChapter(b.slug,i+1);
+    g.append(el('button',{type:'button',class:'ch'+(n?' has':''),onclick:()=>go(b.slug+'-'+(i+1)),'aria-label':'Capítulo '+(i+1)+(n?', '+n+' pregações':'')},[String(i+1),n?el('span',{class:'dot',text:String(n)}):null]))});
+  v.append(g);
+  if(b.n_pregacoes){
+    const ids=[...new Set((D.links[b.slug]||[]).map(l=>l[0]))].map(i=>D.idx.pregacoes[i]);
+    v.append(el('h2',{text:'Todas as pregações em '+b.nome,style:'margin-top:28px'}),sermonTable(ids,true));
+  }
+}
+
+async function viewChapter(b,c,verse){
+  setNav('books');
+  const v=$('view');v.replaceChildren(el('p',{class:'empty',text:'Carregando '+b.nome+' '+c+'…'}));
+  let caps;try{caps=await loadBook(b.slug)}catch(e){v.replaceChildren(el('p',{class:'empty',text:'Não consegui carregar '+b.nome+'. Recarregue a página.'}));return}
+  const verses=caps[c-1];
+  const i=D.idx.livros.indexOf(b);
+  const prev=c>1?b.slug+'-'+(c-1):(i>0?D.idx.livros[i-1].slug+'-'+D.idx.livros[i-1].versos.length:null);
+  const next=c<b.versos.length?b.slug+'-'+(c+1):(i<65?D.idx.livros[i+1].slug+'-1':null);
+  const head=el('div',{class:'chead'},[
+    el('div',{},[el('button',{type:'button',class:'linkish lbl',text:b.nome,onclick:()=>go(b.slug)}),el('h1',{text:b.nome+' '+c})]),
+    el('div',{class:'pager'},[el('button',{type:'button',class:'btn',disabled:prev?null:'',onclick:()=>go(prev),'aria-label':'Capítulo anterior'},'←'),el('button',{type:'button',class:'btn',disabled:next?null:'',onclick:()=>go(next),'aria-label':'Próximo capítulo'},'→')])]);
+  const text=el('div',{class:'text'});
+  let any=0;
+  verses.forEach((t,k)=>{
+    const n=k+1, s=sermonsFor(b.slug,c,n);
+    const span=el('span',{class:'v'+(s.length?' has':''),id:'v'+n},[el('sup',{text:String(n)}),t+' ']);
+    if(s.length){any++;span.setAttribute('role','button');span.setAttribute('tabindex','0');span.title=s.length+(s.length>1?' pregações':' pregação');
+      const open=()=>openDrawer(b,c,n,t,s,span);span.addEventListener('click',open);span.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})}
+    text.append(span);
+  });
+  const parts=[head];
+  parts.push(el('div',{class:'legend'},any?[el('span',{class:'sw'}),'Versículos destacados em azul têm pregação. Toque para ver.']:['Ainda não há pregações neste capítulo.']));
+  parts.push(text);
+  const chSermons=[...new Set((D.links[b.slug]||[]).filter(l=>c>=l[1]&&c<=l[3]).map(l=>l[0]))].map(i=>D.idx.pregacoes[i]);
+  if(chSermons.length)parts.push(el('div',{class:'chlist'},[el('div',{class:'lbl',text:'Pregações neste capítulo'}),sermonTable(chSermons,false)]));
+  parts.push(el('div',{class:'pager',style:'justify-content:center'},[el('button',{type:'button',class:'btn',disabled:prev?null:'',onclick:()=>go(prev)},'← Anterior'),el('button',{type:'button',class:'btn',disabled:next?null:'',onclick:()=>go(next)},'Próximo →')]));
+  v.replaceChildren(el('div',{class:'reader'},parts));
+  if(verse){const t=$('v'+verse);if(t){t.scrollIntoView({block:'center'});const s=sermonsFor(b.slug,c,verse);if(s.length)openDrawer(b,c,verse,verses[verse-1],s,t)}}
+  else window.scrollTo(0,0);
+}
+
+function sermonTable(list,showRef){
+  const tb=el('tbody');
+  for(const s of list)tb.append(el('tr',{},[el('td',{text:fmtDate(s.d)}),
+    el('td',{},[el('div',{},[el('button',{type:'button',class:'linkish',text:s.p||'Pregador não informado',onclick:()=>go('pregador-'+slugify(s.p))})]),el('div',{class:'sub',text:s.ref})]),
+    el('td',{},el('a',{href:ytUrl(s.id),target:'_blank',rel:'noopener',text:'Assistir ↗'}))]));
+  return el('div',{class:'tablewrap'},el('table',{class:'stable'},tb));
+}
+
+function openDrawer(b,c,n,t,list,span){
+  document.querySelectorAll('.v.sel').forEach(x=>x.classList.remove('sel'));span?.classList.add('sel');
+  $('dTitle').textContent=b.nome+' '+c+'.'+n;
+  $('dQuote').textContent=t;
+  const ul=$('dList');ul.replaceChildren();
+  for(const s of list)ul.append(el('li',{class:'sermon'},[
+    el('div',{class:'who',text:s.p||'Pregador não informado'}),
+    el('div',{class:'ref',text:s.ref}),
+    el('div',{class:'meta'},[el('span',{text:fmtDate(s.d)}),s.t?el('span',{text:s.t}):null,s.du?el('span',{text:s.du}):null]),
+    EMBED?el('button',{type:'button',class:'watch',onclick:e=>{const box=el('div',{class:'player'},el('iframe',{src:'https://www.youtube-nocookie.com/embed/'+encodeURIComponent(s.id)+'?autoplay=1',title:'Pregação: '+s.ref,allow:'autoplay; encrypted-media; picture-in-picture',allowfullscreen:''}));e.currentTarget.replaceWith(box,el('a',{href:ytUrl(s.id),target:'_blank',rel:'noopener',text:'Abrir no YouTube ↗',style:'font-size:.85rem'}))}},'▶ Assistir aqui'):el('a',{class:'watch',href:ytUrl(s.id),target:'_blank',rel:'noopener'},'▶ Assistir no YouTube')]));
+  const d=$('drawer');d.classList.add('open');d.setAttribute('aria-hidden','false');$('dClose').focus({preventScroll:true});
+}
+function closeDrawer(){const d=$('drawer');d.classList.remove('open');d.setAttribute('aria-hidden','true');document.querySelectorAll('.v.sel').forEach(x=>x.classList.remove('sel'))}
+$('dClose').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+const slugify=s=>strip(s||'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+function viewPreachers(){
+  setNav('preachers');
+  const cnt={};for(const s of D.idx.pregacoes)if(s.p)cnt[s.p]=(cnt[s.p]||0)+1;
+  const v=$('view');v.replaceChildren(el('h1',{text:'Pregadores'}));
+  const g=el('div',{class:'plist'});
+  for(const [p,n] of Object.entries(cnt).sort((a,b)=>b[1]-a[1]))g.append(el('button',{type:'button',class:'pcard',onclick:()=>go('pregador-'+slugify(p))},[el('span',{text:p}),el('span',{class:'n',text:n+(n>1?' pregações':' pregação')})]));
+  v.append(g);
+}
+function viewPreacher(sl){
+  setNav('preachers');
+  const list=D.idx.pregacoes.filter(s=>slugify(s.p)===sl);
+  const v=$('view');v.replaceChildren();
+  if(!list.length){v.append(el('p',{class:'empty',text:'Pregador não encontrado.'}));return}
+  const books={};for(const s of list){const b=(s.ref.match(/^(\d )?[^\d;]+/)||[''])[0].trim();if(b)books[b]=(books[b]||0)+1}
+  v.append(el('button',{type:'button',class:'linkish lbl',text:'Pregadores',onclick:()=>go('pregadores')}),el('h1',{text:list[0].p}),
+    el('div',{class:'stats'},[el('span',{text:list.length+' pregações'}),el('span',{text:'Mais pregados: '+Object.entries(books).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([b,n])=>b+' ('+n+')').join(', ')})]),
+    sermonTable(list,true));
+}
+
+// reference parser for the search box
+function parseRef(q){
+  const s=strip(q).replace(/\s+/g,' ').trim();
+  const m=s.match(/^(\d)?\s*([a-z]+)\.?\s*(\d+)?(?:[\s.:,]+(\d+))?/);if(!m)return null;
+  const key=(m[1]?m[1]+' ':'')+m[2];
+  const b=D.idx.livros.find(b=>strip(b.nome)===key)||D.idx.livros.find(b=>strip(b.abrev).replace(/\s/g,'')===key.replace(/\s/g,''))||D.idx.livros.find(b=>strip(b.nome).startsWith(key));
+  if(!b)return null;
+  const c=m[3]?Math.min(+m[3],b.versos.length):null;const v=m[4]&&c?Math.min(+m[4],b.versos[c-1]):null;
+  return b.slug+(c?'-'+c:'')+(v?'-'+v:'');
+}
+$('searchForm').addEventListener('submit',e=>{e.preventDefault();const r=parseRef($('q').value);if(r){go(r);$('q').value=''}else{$('q').setCustomValidity('Não reconheci essa passagem. Tente "Ef 5.18" ou "Salmos 23".');$('q').reportValidity()}});
+$('q').addEventListener('input',()=>$('q').setCustomValidity(''));
+$('navBooks').addEventListener('click',()=>go(''));
+$('navPreachers').addEventListener('click',()=>go('pregadores'));
+
+function go(h){if(h==null)return;if(location.hash.slice(1)===h)route();else location.hash=h}
+function route(){
+  closeDrawer();
+  const h=decodeURIComponent(location.hash.slice(1));
+  if(!h)return viewHome();
+  if(h==='pregadores')return viewPreachers();
+  if(h.startsWith('pregador-'))return viewPreacher(h.slice(9));
+  const m=h.match(/^(.*?)(?:-(\d+))?(?:-(\d+))?$/);
+  // slugs can contain digits (1-samuel), so try longest match first
+  let b=null,c=null,v=null;
+  for(const bk of D.idx.livros){if(h===bk.slug){b=bk;break}if(h.startsWith(bk.slug+'-')){const rest=h.slice(bk.slug.length+1).split('-').map(Number);if(rest.every(n=>n>0)){b=bk;c=rest[0];v=rest[1]||null}}}
+  if(!b)return viewHome();
+  if(!c)return viewBook(b);
+  return viewChapter(b,Math.min(c,b.versos.length),v);
+}
+window.addEventListener('hashchange',route);
+
+(async()=>{
+  try{D.idx=await (await fetch('dados/indice.json')).json()}catch(e){$('view').replaceChildren(el('p',{class:'empty',text:'Não consegui carregar os dados. Recarregue a página.'}));return}
+  D.links=D.idx.ligacoes;for(const b of D.idx.livros)D.bySlug[b.slug]=b;
+  $('credit').textContent='Hokmah · Texto bíblico: '+D.idx.fonte+' Pregações: canal da 1ª Igreja Congregacional de Santa Cruz no YouTube.';
+  route();
+})();
+</script>
